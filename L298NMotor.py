@@ -15,8 +15,32 @@ WORDS = ["QIDONG"]
 SLUG = "L298N"
 
 def handle(text, mic, profile, wxbot=None):
+    """
+    Responds to user-input, typically speech text
+    Arguments:
+        text -- user-input, typically transcribed speech
+        mic -- used to interact with the user (for both input and output)
+        profile -- contains information related to the user (e.g., phone
+                   number)
+        wxbot -- wechat bot instance
+    """
     logger = logging.getLogger(__name__)
-    if SLUG not in profile or \
+
+    kwargs = {}
+    kwargs['mic'] = mic
+    kwargs['profile'] = profile
+
+    persona = 'DINGDANG'
+    if 'robot_name' in profile:
+        persona = profile['robot_name']
+
+    robot_name_cn = u'叮当'
+    if 'robot_name_cn' in profile:
+        robot_name_cn = profile['robot_name_cn']
+
+
+
+    if SLUG not in profile:
        'gpio' not in profile[SLUG]:
         mic.say(u'L298N配置有误，插件使用失败', cache=True)
         return
@@ -31,13 +55,13 @@ def handle(text, mic, profile, wxbot=None):
     else:
         mic.say(u'主人，开车要先接好引脚线', cache=True)
     try:
+        logger.debug(word)
         motor=L298NMotor(leftPwm,leftGPIO1,leftGPIO2,rightPwm,rightGPIO1,rightGPIO2)
         i:=50
-        if (any(word in text for word in [u"启动",u"打开发动机"])):
+        if (any(word in text for word in [u"启动"])):
             motor.start()
             mic.say(u"小车已经启动,你现在可以说前进或者后退来控制")
-        else if (any(word in text for word in [u"前进",u""])):
-
+        else if (any(word in text for word in [u"前进"])):
             while i<100:
                 i=i+5
                 motor.SetSpeed(i)
