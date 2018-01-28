@@ -7,7 +7,7 @@ import subprocess
 import RPi.GPIO as GPIO
 import time
 import traceback
-
+import threading
 """
 
 """
@@ -57,16 +57,23 @@ def handle(text, mic, profile, wxbot=None):
     rightPwm = int(profile[SLUG]['gpio_right_pwm'])
     rightGPIO1 = int(profile[SLUG]['gpio_right_1'])
     rightGPIO2 = int(profile[SLUG]['gpio_right_2'])
-    try:
+    
+    while True:
+        logger.info("==>xiao che in driver mode")
         logger.debug(text)
-        xiaoche = Xiaoche(params,mic,profile)
+        car = Car(params,mic,profile)
 
         #小车，添加电机模块
-        xiaoche.motor = L298NMotor(mode, leftPwm,leftGPIO1,leftGPIO2,rightPwm,rightGPIO1,rightGPIO2)
-        xiaoche.start() #启动小车线程
+        car.motor = L298NMotor(mode, leftPwm,leftGPIO1,leftGPIO2,rightPwm,rightGPIO1,rightGPIO2)
+        car.start() #启动小车线程
+       
+        mic.say(u"进入语音驾驶模式,你可以说前进或者后退来控制")
+
+        logger.info("==> go forward")
 
         while True:
             try:
+                logger.info('离线唤醒监听中')
                 threshold, transcribed = mic.passiveListen(persona)
             except Exception, e:
                 logger.error(e)
@@ -75,46 +82,46 @@ def handle(text, mic, profile, wxbot=None):
             if not transcribed or not threshold:
                 logger.info("Nothing has been said or transcribed.")
                 continue
+            
+            car.stop()
+            time.sleep(1)
 
             input = mic.activeListen()
 
-            if (any(word in input for word in [u"启动"])):
-                 logger.info("小车进入驾驶模式")
-                 xiaoche.start()
-                 mic.say(u"小车进入驾驶模式,你现在可以说前进或者后退来控制")
-                 return
+            if input :
+                logger.info(input)
+                if (any(word in input for word in [u"前进"])):
+                     mic.say(u"小车准备前进")
+                     car.forward()
+                     return
 
-            if (any(word in input for word in [u"前进"])):
-                 mic.say(u"小车准备前进")
-                 xiaoche.forward(100)
-                 return
 
-            if (any(word in input for word in [u"停车",u"停止"])):
-                 mic.say(u"小车准备停车")
-                 xiaoche.stop()
-                 return
+                if (any(word in input for word in [u"停车",u"停止"])):
+                     mic.say(u"小车准备停车")
+                     car.stop()
+                     return
 
-            if (any(word in input for word in [u"退出行驶",u"退出"])):
-                 mic.say(u"退出行驶模式")
-                 xiaoche.exit()
-                 return
+                if (any(word in input for word in [u"退出行驶",u"退出"])):
+                    mic.say(u"退出行驶模式")
+                    car.exit()
+                    return
+            else :
+                mic.say(u"什么？", cache=True)
 
-    except Exception, e:
-        print u"配置异常"
-        print e
-        print traceback.print_exc()
-        logger.error(e)
-        mic.say(u'主人，动力系统有问题', cache=True)
+        if car.is_stop == True :
+            print "退出驾史模式"
+            mic.say(u"通出驾驶模式")
+            return 
 
 def isValid(text):
-    return any(word in text for word in [u"启动",u"自动驾驶","开车","手动驾驶", u"前进",u"加速",u"快点",u"停车",u"左转",u"向左转",u"向右转",u"后退",u"后倒",u"退出行驶"])
+    return any(word in text for word in [u"启动","启动小车",u"自动驾驶","开车","手动驾驶", u"前进",u"加速",u"快点",u"停车",u"停止",u"左转",u"向左转",u"向右转",u"后退",u"后倒",u"退出行驶"])
 
 
 
-class Xiaoche(threading.Thread):
+class Car(threading.Thread):
 
-    def __init__(self, mic,profile):
-        super(Xiaoche,self).__init__()
+    def __init__(self,params, mic,profile):
+        super(Car,self).__init__()
         self.event=threading.Event()
 
         self.logger = logging.getLogger(__name__)
@@ -126,43 +133,45 @@ class Xiaoche(threading.Thread):
         self.is_stop = False
         self.motor = None
 
-        def run(self):
-            while True and not self.is_exit:
-                if self.event.wait():
-                    if self.is_stop== True:
-                        self.setSpeed(0)
-                    else :
-                        self.setSpeed(100)
-
-
-        def setSpeed(self,speed):
-            time.sleep(1)
-            print "设置",speed
-
-        def forward(self):
-            print "开始前行"
+        
+    def forward(self):
             self.event.set()
             self.motor.forward()
 
 
-        def stop(self):
-            try:
-                print "中间停车,没有熄火"
-                self.motor.stop()
-                self.event.clear()
-                self.is_stop =False
-            except:
-                pass
+    def run(self):
+        self.motor.start()
+        while True and not self.is_exit:
+            if self.event.wait():
+                if self.is_stop== True:
+                    self.setSpeed(0)
+                else :
+                    self.setSpeed(100)
 
-        def exit(self):
-            print "停车熄火"
-            self.motor.exit()
-            self.is_exit=True
-            self.stop()
 
-        def resume(self):
-             self.is_stop = False
-             self.event.set()
+    def setSpeed(self,speed):
+        print "设置",speed
+        self.motor.setSpeed(speed)
+
+
+    def stop(self):
+        try:
+            print "中间停车,没有熄火"
+            self.motor.stop()
+            self.event.clear()
+            self.is_stop =False
+        except:
+            pass
+
+    def exit(self):
+        print "停车熄火"
+        self.motor.exit()
+        self.is_exit=True
+        self.stop()
+
+    def resume(self):
+        self.is_stop = False
+        self.event.set()
 
 
 class L298NMotor:
@@ -186,7 +195,6 @@ class L298NMotor:
         self.pwm2=None
 
     def start(self):
-         print 'start'
          GPIO.setup(self.leftGPIO1, GPIO.OUT)
          GPIO.setup(self.leftGPIO2, GPIO.OUT)
          GPIO.setup(self.rightGPIO1, GPIO.OUT)
