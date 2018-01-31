@@ -1,20 +1,36 @@
 <html>
 <head>
 </head>
-<body>
+<body style="width:640px;height:480px">
 
  <div>
+   <center>
+        <img src="http://192.168.2.144:8080/?action=stream" />
+    </center>
+</div>
+<div style="position:absolute;bottom:10px;left:10px">
 
+  <div style="width:200px;height:150px">
+    <div style="clear:both"></div>
+    <div style="position:relative">
+    <div style="margin:20px 70px">
+      <button onclick="go('forward')">前进</button>
+    </div>
+    <div>
+      <button onclick="go('left')">左转</button>
+      <button onclick="go('right')" style="margin-left:100px">右转</button>
+    </div>
+    <div style="margin:20px 70px">  <button onclick="go('reverse')">后退</button></div>
+  </div>
+  </div>
+
+
+
+  <button onclick="go('start')">启动</button>
+  <button onclick="go('stop')">停止</button>
 </div>
 
 
-<button onclick="go('start')">启动</button>
-<button onclick="go('close')">关闭</button>
-
-<button onclick="go('forward')">上</button>
-<button onclick="go('reverse')">下</button>
-<button onclick="go('left')">左</button>
-<button onclick="go('right')">右</button>
 
   <script src="https://cdn.bootcss.com/socket.io/2.0.4/socket.io.js"></script>
   <script type="text/javascript" charset="utf-8">
