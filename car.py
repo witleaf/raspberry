@@ -69,10 +69,10 @@ class L298NMotor:
         self.pwm2.ChangeDutyCycle(speed)
 
     def stop(self):
-         GPIO.output(self.gpio_left_gpio_1,GPIO.LOW)
-         GPIO.output(self.gpio_left_gpio_2,GPIO.LOW)
-         GPIO.output(self.gpio_right_gpio_1,GPIO.LOW)
-         GPIO.output(self.gpio_right_gpio_2,GPIO.LOW)
+         GPIO.output(self.leftGPIO1,GPIO.LOW)
+         GPIO.output(self.leftGPIO2,GPIO.LOW)
+         GPIO.output(self.rightGPIO1,GPIO.LOW)
+         GPIO.output(self.rightGPIO2,GPIO.LOW)
          self.pwm1.stop()
          self.pwm2.stop()
 
