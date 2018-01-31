@@ -1,0 +1,33 @@
+<html>
+<head>
+</head>
+<body>
+
+ <div>
+
+</div>
+
+
+<button onclick="go('start')">启动</button>
+<button onclick="go('close')">关闭</button>
+
+<button onclick="go('forward')">上</button>
+<button onclick="go('reverse')">下</button>
+<button onclick="go('left')">左</button>
+<button onclick="go('right')">右</button>
+
+  <script src="https://cdn.bootcss.com/socket.io/2.0.4/socket.io.js"></script>
+  <script type="text/javascript" charset="utf-8">
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+      socket.on('connect', function() {
+          console.log("connet")
+          socket.emit('my event', {data: 'I\'m connected!'});
+      });
+      function go(action){
+        socket.emit('action', {data:action});
+      }
+  </script>
+<body>
+
+</html>
