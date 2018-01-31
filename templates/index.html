@@ -25,7 +25,7 @@
           socket.emit('my event', {data: 'I\'m connected!'});
       });
       function go(action){
-        socket.emit('action', {data:action});
+        socket.emit('action', {action:action});
       }
   </script>
 <body>

@@ -25,31 +25,32 @@ def index():
 @socketio.on('action')
 def handle_message(msg):
     print('received message: ' + str(msg))
-    if msg.action == 'start':
+    action =msg['action']
+    print(action) 
+    if action == 'start':
         motor.start()
 
-    if msg.action == 'forward':
-
+    if action == 'forward':
         motor.forward()
         motor.setSpeed(100)
 
-    if msg.action == 'reverse':
+    if action == 'reverse':
         motor.reverse()
         motor.setSpeed(100)
 
-    if msg.action == 'left':
+    if action == 'left':
         motor.turnLeft()
         motor.reverse(50)
 
-    if msg.action == 'right':
+    if action == 'right':
         motor.turnRight()
         motor.setSpeed(50)
 
-    if msg.action == 'stop':
+    if action == 'stop':
         motor.stop()
 
-    if msg.action == 'exit':
+    if action == 'exit':
         motor.exit()
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True,host='0.0.0.0')

@@ -1,3 +1,5 @@
+import RPi.GPIO as GPIO
+
 class L298NMotor:
     GPIO.setwarnings(False)
 
